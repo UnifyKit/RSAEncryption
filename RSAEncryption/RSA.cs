@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 
@@ -38,18 +37,13 @@ namespace RSAEncryption
         }
 
         // Methods:
-        public void LoadPublicFromXml(string publicPath)
+        public void LoadPublicFromXml(string publicKeyXmlString)
         {
-            if (!File.Exists(publicPath))
-            {
-                throw new FileNotFoundException("File not exists: " + publicPath);
-            }
-
             // Using the .NET RSA class to load a key from an Xml file, and populating the relevant members
             // of my class with it's RSAParameters
             try
             {
-                rsa.FromXmlString(File.ReadAllText(publicPath));
+                rsa.FromXmlString(publicKeyXmlString);
                 RSAParameters rsaParams = rsa.ExportParameters(false);
                 Modulus = new BigInteger(rsaParams.Modulus);
                 Exponent = new BigInteger(rsaParams.Exponent);
@@ -75,16 +69,11 @@ namespace RSAEncryption
         }
 
         // Same as the previous one, but this time loading the private Key
-        public void LoadPrivateFromXml(string privatePath)
+        public void LoadPrivateFromXml(string privateKeyXmlString)
         {
-            if (!File.Exists(privatePath))
-            {
-                throw new FileNotFoundException("File not exists: " + privatePath);
-            }
-
             try
             {
-                rsa.FromXmlString(File.ReadAllText(privatePath));
+                rsa.FromXmlString(privateKeyXmlString);
                 RSAParameters rsaParams = rsa.ExportParameters(true);
                 D = new BigInteger(rsaParams.D);  // This parameter is only for private key
                 Exponent = new BigInteger(rsaParams.Exponent);
