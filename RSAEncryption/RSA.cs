@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace RSAEncryption
 {
@@ -95,13 +96,43 @@ namespace RSAEncryption
                 throw new CryptographicException("Private Key must be loaded before using the Private Encryption method!");
             }
 
-            // Converting the byte array data into a BigInteger instance
-            BigInteger bnData = new BigInteger(data);
+            string source = System.Text.Encoding.Default.GetString(data);
 
-            // (bnData ^ D) % Modulus - This Encrypt the data using the private Exponent: D
-            BigInteger encData = bnData.modPow(D, Modulus);
+            int len = source.Length;
+            int len1 = 0;
+            int blockLen = 0;
+            if ((len % 128) == 0)
+            {
+                len1 = len / 128;
+            }
+            else
+            {
+                len1 = len / 128 + 1;
+            }
 
-            return encData.getBytes();
+            string block = "";
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < len1; i++)
+            {
+                if (len >= 128)
+                {
+                    blockLen = 128;
+                }
+                else
+                {
+                    blockLen = len;
+                }
+
+                block = source.Substring(i * 128, blockLen);
+                byte[] oText = System.Text.Encoding.Default.GetBytes(block);
+                BigInteger biText = new BigInteger(oText);
+                BigInteger biEnText = biText.modPow(D, Modulus);
+                string temp = biEnText.ToHexString();
+                result.Append(temp).Append("@");
+                len -= blockLen;
+            }
+
+            return System.Text.Encoding.Default.GetBytes(result.ToString().TrimEnd('@'));
         }
 
         // Encrypt data using public key
@@ -112,13 +143,41 @@ namespace RSAEncryption
                 throw new CryptographicException("Public Key must be loaded before using the Public Encryption method!");
             }
 
-            // Converting the byte array data into a BigInteger instance
-            BigInteger bnData = new BigInteger(data);
+            string source = System.Text.Encoding.Default.GetString(data);
 
-            // (bnData ^ Exponent) % Modulus - This Encrypt the data using the public Exponent
-            BigInteger encData = bnData.modPow(Exponent, Modulus);
+            int len = source.Length;
+            int len1 = 0;
+            int blockLen = 0;
+            if ((len % 128) == 0)
+            {
+                len1 = len / 128;
+            }
+            else
+            {
+                len1 = len / 128 + 1;
+            }
+            string block = "";
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < len1; i++)
+            {
+                if (len >= 128)
+                {
+                    blockLen = 128;
+                }
+                else
+                {
+                    blockLen = len;
+                }
+                block = source.Substring(i * 128, blockLen);
+                byte[] oText = System.Text.Encoding.Default.GetBytes(block);
+                BigInteger biText = new BigInteger(oText);
+                BigInteger biEnText = biText.modPow(Exponent, Modulus);
+                string temp = biEnText.ToHexString();
+                result.Append(temp).Append("@");
+                len -= blockLen;
+            }
 
-            return encData.getBytes();
+            return System.Text.Encoding.Default.GetBytes(result.ToString().TrimEnd('@'));
         }
 
         // Decrypt data using private key (for data encrypted with public key)
@@ -129,13 +188,19 @@ namespace RSAEncryption
                 throw new CryptographicException("Private Key must be loaded before using the Private Decryption method!");
             }
 
-            // Converting the encrypted data byte array data into a BigInteger instance
-            BigInteger encData = new BigInteger(encryptedData);
+            string encryptString = System.Text.Encoding.Default.GetString(encryptedData);
 
-            // (encData ^ D) % Modulus - This Decrypt the data using the private Exponent: D
-            BigInteger bnData = encData.modPow(D, Modulus);
-
-            return bnData.getBytes();
+            StringBuilder result = new StringBuilder();
+            string[] strarr1 = encryptString.Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < strarr1.Length; i++)
+            {
+                string block = strarr1[i];
+                BigInteger biText = new BigInteger(block, 16);
+                BigInteger biEnText = biText.modPow(D, Modulus);
+                string temp = System.Text.Encoding.Default.GetString(biEnText.getBytes());
+                result.Append(temp);
+            }
+            return System.Text.Encoding.Default.GetBytes(result.ToString());
         }
 
         // Decrypt data using public key (for data encrypted with private key)
@@ -146,13 +211,20 @@ namespace RSAEncryption
                 throw new CryptographicException("Public Key must be loaded before using the Public Deccryption method!");
             }
 
-            // Converting the encrypted data byte array data into a BigInteger instance
-            BigInteger encData = new BigInteger(encryptedData);
 
-            // (encData ^ Exponent) % Modulus - This Decrypt the data using the public Exponent
-            BigInteger bnData = encData.modPow(Exponent, Modulus);
+            string encryptString = System.Text.Encoding.Default.GetString(encryptedData);
 
-            return bnData.getBytes();
+            StringBuilder result = new StringBuilder();
+            string[] strarr1 = encryptString.Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < strarr1.Length; i++)
+            {
+                string block = strarr1[i];
+                BigInteger biText = new BigInteger(block, 16);
+                BigInteger biEnText = biText.modPow(Exponent, Modulus);
+                string temp = System.Text.Encoding.Default.GetString(biEnText.getBytes());
+                result.Append(temp);
+            }
+            return System.Text.Encoding.Default.GetBytes(result.ToString());
         }
 
         // Implementation of IDisposable interface,
